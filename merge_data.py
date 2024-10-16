@@ -4,9 +4,10 @@ import numpy as np
 from pandasgui import show
 from datetime import datetime
 
-numeric = ['tipo cambio bs', 'tipo cambio M.E.']
+numeric = ['tipo cambio bs', 'tipo cambio ME']
 
 def process_file(file_path, names_column):
+    
     # Extraer la fecha del nombre del archivo
     file_name = os.path.basename(file_path)
     date_str = os.path.splitext(file_name)[0]  # Eliminar la extensión
@@ -14,11 +15,25 @@ def process_file(file_path, names_column):
     
     # Leer el archivo ODS
     df = pd.read_excel(file_path, engine='odf', names=names_column)
+    
+     # Inicializar el DataFrame de metales
+    df_metales = pd.DataFrame()
+    
     df['date'] = df_date
-
+    
+    if df.shape[0] < 20:
+        return None, None
+        
+    # Reemplazar espacios en blanco y cadenas vacías con NaN
+    df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+    
     # Eliminar filas con valores nulos en 'unidad monetaria'
-    df = df.dropna(subset=['unidad monetaria'])
-
+    df = df.dropna(subset=['unidad monetaria']) 
+    
+    # Eliminar filas donde ambos tipos de cambio son NaN
+    df = df.dropna(subset=['pais','tipo cambio bs', 'tipo cambio ME'], how='all')
+    
+    
     # Eliminar la primera fila
     df = df.iloc[1:].reset_index(drop=True)
     
@@ -31,7 +46,7 @@ def process_file(file_path, names_column):
     # Filtrar para obtener metales
     raw_metales = df[(df['pais'] == 'ORO') | (df['pais'] == 'PLATA')]
     df_metales = raw_metales.copy()
-   
+
     # Eliminar los metales del DataFrame original
     df = df.drop(raw_metales.index)
 
@@ -39,9 +54,9 @@ def process_file(file_path, names_column):
     df = df.iloc[:47].reset_index(drop=True)
 
     return df, df_metales
-
+    
 def merge_data(directory_path):
-    names_column = ['pais', 'unidad monetaria', 'moneda', 'tipo cambio bs', 'tipo cambio M.E.']
+    names_column = ['pais', 'unidad monetaria', 'moneda', 'tipo cambio bs', 'tipo cambio ME']
     all_df = pd.DataFrame()
     all_df_metales = pd.DataFrame()
 
@@ -50,6 +65,10 @@ def merge_data(directory_path):
         if file_name.endswith('.ods'):
             file_path = os.path.join(directory_path, file_name)
             df, df_metales = process_file(file_path, names_column)
+            
+            # Si el resultado es None, pasar al siguiente archivo
+            if df is None or df_metales is None:
+                continue
 
             # Concatenar los resultados con los DataFrames globales
             all_df = pd.concat([all_df, df], ignore_index=True)
@@ -58,13 +77,17 @@ def merge_data(directory_path):
     # Restablecer el índice de all_df_metales
     all_df_metales.reset_index(drop=True, inplace=True)
 
-    all_df_metales['tipo cambio M.E.'] = all_df_metales['tipo cambio bs']
-    all_df_metales = all_df_metales.drop(columns=['tipo cambio bs'])
-
+    if 'tipo cambio bs' in all_df_metales.columns:
+        all_df_metales['tipo cambio ME'] = all_df_metales['tipo cambio bs']
+        all_df_metales = all_df_metales.drop(columns=['tipo cambio bs'])
+    else:
+        print("La columna 'tipo cambio bs' no existe en all_df_metales.")
+    
+    all_df_metales.rename(columns={'pais':'metal'}, inplace=True)
+    
     # Mostrar los DataFrames resultantes
-    print(all_df.groupby('pais')['tipo cambio bs'].mean())
-    print(all_df)
-    print(all_df_metales)
+    print(all_df.shape)
+    print(all_df_metales.shape)
 
     # Puedes devolver los DataFrames si lo necesitas para otros fines
     return all_df, all_df_metales
