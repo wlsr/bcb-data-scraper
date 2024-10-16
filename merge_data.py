@@ -5,7 +5,7 @@ from pandasgui import show
 from datetime import datetime
 from connection import * 
 
-numeric = ['tipo cambio bs', 'tipo cambio ME']
+numeric = ['exchange_rate_bs', 'exchange_rate_me']
 
 def process_file(file_path, names_column):
     
@@ -29,10 +29,10 @@ def process_file(file_path, names_column):
     df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
     
     # Eliminar filas con valores nulos en 'unidad monetaria'
-    df = df.dropna(subset=['unidad monetaria']) 
+    df = df.dropna(subset=['monetary_unit']) 
     
     # Eliminar filas donde ambos tipos de cambio son NaN
-    df = df.dropna(subset=['pais','tipo cambio bs', 'tipo cambio ME'], how='all')
+    df = df.dropna(subset=['country','exchange_rate_bs', 'exchange_rate_me'], how='all')
     
     
     # Eliminar la primera fila
@@ -45,7 +45,7 @@ def process_file(file_path, names_column):
     df[numeric] = df[numeric].apply(pd.to_numeric, errors='coerce')
 
     # Filtrar para obtener metales
-    raw_metales = df[(df['pais'] == 'ORO') | (df['pais'] == 'PLATA')]
+    raw_metales = df[(df['country'] == 'ORO') | (df['country'] == 'PLATA')]
     df_metales = raw_metales.copy()
 
     # Eliminar los metales del DataFrame original
@@ -57,7 +57,7 @@ def process_file(file_path, names_column):
     return df, df_metales
     
 def merge_data(directory_path):
-    names_column = ['pais', 'unidad monetaria', 'moneda', 'tipo cambio bs', 'tipo cambio ME']
+    names_column = ['country', 'monetary_unit', 'currency', 'exchange_rate_bs', 'exchange_rate_me']
     all_df = pd.DataFrame()
     all_df_metales = pd.DataFrame()
 
@@ -78,13 +78,13 @@ def merge_data(directory_path):
     # Restablecer el índice de all_df_metales
     all_df_metales.reset_index(drop=True, inplace=True)
 
-    if 'tipo cambio bs' in all_df_metales.columns:
-        all_df_metales['tipo cambio ME'] = all_df_metales['tipo cambio bs']
-        all_df_metales = all_df_metales.drop(columns=['tipo cambio bs'])
+    if 'exchange_rate_bs' in all_df_metales.columns:
+        all_df_metales['exchange_rate_me'] = all_df_metales['exchange_rate_bs']
+        all_df_metales = all_df_metales.drop(columns=['exchange_rate_bs'])
     else:
-        print("La columna 'tipo cambio bs' no existe en all_df_metales.")
+        print("La columna 'exchange_rate_bs' no existe en all_df_metales.")
     
-    all_df_metales.rename(columns={'pais':'metal'}, inplace=True)
+    all_df_metales.rename(columns={'country':'metal'}, inplace=True)
     
     # Mostrar los DataFrames resultantes
     print(all_df.shape)

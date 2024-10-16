@@ -28,7 +28,6 @@ def download_ods_files(start_date, end_date, download_path, delay):
                 response = requests.get(url)
                 response.raise_for_status()  # Lanza un error para códigos de respuesta 4xx y 5xx
                 
-                
                 # Guardar el archivo
                 with open(file_name, 'wb') as f:
                     f.write(response.content)
