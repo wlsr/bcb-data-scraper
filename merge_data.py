@@ -3,6 +3,7 @@ import os
 import numpy as np
 from pandasgui import show
 from datetime import datetime
+from connection import * 
 
 numeric = ['tipo cambio bs', 'tipo cambio ME']
 
@@ -95,3 +96,4 @@ def merge_data(directory_path):
 # Ejecutar la función para procesar los archivos en la carpeta 'data'
 directory_path = 'data'  # Asegúrate de que esta carpeta exista
 all_df, all_df_metales = merge_data(directory_path)
+load_data_db(all_df, all_df_metales)

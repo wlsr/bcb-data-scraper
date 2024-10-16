@@ -18,6 +18,7 @@ This project downloads ODS files containing financial data from the Central Bank
   - `pandas`
   - `numpy`
   - `datetime`
+  - `psycopg2`
 
 Make sure to install the necessary packages using:
 ```bash
