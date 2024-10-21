@@ -1,14 +1,24 @@
 import psycopg2
+import os
 from sqlalchemy import create_engine, Numeric
+from dotenv import load_dotenv
 
-user = "postgres"
-password = "sistemas19"
-name_bd = 'financial_data'
+# Cargar las variables del archivo .env en el entorno
+load_dotenv()
 
+# Obtener la contraseña desde la variable de entorno
+password = os.getenv('DB_PASSWORD')
+user = os.getenv('DB_USER')
+name_bd = os.getenv('DB_NAME')
+
+
+# Conexión a PostgreSQLfinancial_data
+engine = create_engine(f'postgresql+psycopg2://{user}:{password}@localhost/{name_bd}')
+    
 def create_database_if_not_exists(dbname, user, password, host='localhost', port='5432'):
     # Conectar a la base de datos PostgreSQL (por defecto)
     connection = psycopg2.connect(
-        dbname='postgres',
+        dbname=user,
         user=user,
         password=password,
         host=host,
@@ -42,17 +52,13 @@ def detect_numeric_columns(df):
         dtype[col] = Numeric(precision=18, scale=6)  # Ajusta precision y scale según sea necesario
     return dtype
 
-def load_data_db(df1, df2):
-    # Conexión a PostgreSQLfinancial_data
-    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@localhost/{name_bd}')
+def load_data_db(df, table):
     
     # Detectar las columnas flotantes en cada DataFrame
-    dtype_df1 = detect_numeric_columns(df1)
-    dtype_df2 = detect_numeric_columns(df2)
+    dtype_df = detect_numeric_columns(df)
     
     # Cargar los DataFrames a las tablas correspondientes
-    df1.to_sql('exchange_rates', engine, if_exists='append', index=False, dtype=dtype_df1)
-    df2.to_sql('metals', engine, if_exists='append', index=False, dtype=dtype_df2)
+    df.to_sql(table, engine, if_exists='append', index=False, dtype=dtype_df)
     
 # Ejemplo de uso
 create_database_if_not_exists(dbname=name_bd, user=user, password=password)
