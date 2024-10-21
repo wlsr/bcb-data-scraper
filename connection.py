@@ -53,12 +53,12 @@ def detect_numeric_columns(df):
     return dtype
 
 def load_data_db(df, table):
-    
+ 
     # Detectar las columnas flotantes en cada DataFrame
     dtype_df = detect_numeric_columns(df)
     
     # Cargar los DataFrames a las tablas correspondientes
-    df.to_sql(table, engine, if_exists='append', index=False, dtype=dtype_df)
+    df.to_sql(table, engine, if_exists='replace', index=False, dtype=dtype_df)
     
 # Ejemplo de uso
 create_database_if_not_exists(dbname=name_bd, user=user, password=password)

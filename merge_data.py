@@ -96,5 +96,6 @@ def merge_data(directory_path):
 # Ejecutar la función para procesar los archivos en la carpeta 'data'
 directory_path = 'data'  # Asegúrate de que esta carpeta exista
 all_df, all_df_metales = merge_data(directory_path)
+
 load_data_db(all_df, 'raw_exchange_rates')
 load_data_db(all_df_metales, 'raw_metals')
