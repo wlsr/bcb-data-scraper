@@ -44,8 +44,8 @@ def download_ods_files(start_date, end_date, download_path, delay):
         current_date += timedelta(days=1)  # Avanza al siguiente día
 
 # Ejemplo de uso
-start_date = datetime(2019, 1, 1)
+start_date = datetime(2016, 1, 1)
 end_date = datetime(2024, 10, 20)
 download_path = 'data'  # Asegúrate de que esta carpeta exista
 
-download_ods_files(start_date, end_date, download_path,delay=2)
+download_ods_files(start_date, end_date, download_path,delay=0.5)

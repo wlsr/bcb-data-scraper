@@ -7,7 +7,7 @@ from connection import *
 
 numeric = ['exchange_rate_bs', 'exchange_rate_me']
 
-def process_file(file_path, names_column):
+def process_file(file_path, name_column):
     
     # Extraer la fecha del nombre del archivo
     file_name = os.path.basename(file_path)
@@ -15,28 +15,25 @@ def process_file(file_path, names_column):
     df_date = datetime.strptime(date_str, '%d-%m-%Y').date()
     
     # Leer el archivo ODS
-    df = pd.read_excel(file_path, engine='odf', names=names_column)
+    df = pd.read_excel(file_path, engine='odf', skiprows=10, names=name_column, usecols='A:E')
     
      # Inicializar el DataFrame de metales
     df_metales = pd.DataFrame()
     
-    df['date'] = df_date
-    
-    if df.shape[0] < 20:
+    if df.shape[0] < 15:
         return None, None
         
     # Reemplazar espacios en blanco y cadenas vacías con NaN
     df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
+    
+    # Añadir la fecha
+    df['date'] = df_date
     
     # Eliminar filas con valores nulos en 'unidad monetaria'
     df = df.dropna(subset=['monetary_unit']) 
     
     # Eliminar filas donde ambos tipos de cambio son NaN
     df = df.dropna(subset=['country','exchange_rate_bs', 'exchange_rate_me'], how='all')
-    
-    
-    # Eliminar la primera fila
-    df = df.iloc[1:].reset_index(drop=True)
     
     # Eliminar las comas de las columnas especificadas
     df[numeric] = df[numeric].replace({',': ''}, regex=True)
@@ -51,10 +48,13 @@ def process_file(file_path, names_column):
     # Eliminar los metales del DataFrame original
     df = df.drop(raw_metales.index)
 
-    # Limitar df a las primeras 47 filas
-    df = df.iloc[:47].reset_index(drop=True)
-
+    # Extraer currency
+    index_to_keep = df[(df['monetary_unit'] == 'UNIDAD DE FOMENTO DE VIVIENDA') | (df['currency'] == 'Bs/UFV')].index
+    if not index_to_keep.empty:
+        df = df.loc[:index_to_keep[0]]
+    
     return df, df_metales
+
     
 def merge_data(directory_path):
     names_column = ['country', 'monetary_unit', 'currency', 'exchange_rate_bs', 'exchange_rate_me']
@@ -89,7 +89,10 @@ def merge_data(directory_path):
     # Mostrar los DataFrames resultantes
     print(all_df.shape)
     print(all_df_metales.shape)
-
+    
+    # guardar en un csv for the tests
+    df.to_csv('data/raw_exchange_rates.csv', index=False)
+    
     # Puedes devolver los DataFrames si lo necesitas para otros fines
     return all_df, all_df_metales
 
