@@ -1,6 +1,6 @@
 import psycopg2
 import os
-from sqlalchemy import create_engine, Numeric
+from sqlalchemy import create_engine, Numeric, text
 from dotenv import load_dotenv
 
 # Cargar las variables del archivo .env en el entorno
@@ -41,6 +41,14 @@ def create_database_if_not_exists(dbname, user, password, host='localhost', port
     # Cerrar la conexión
     cursor.close()
     connection.close()
+
+def drop_table_cascade(engine, table_name):
+    """Eliminar la tabla con la opción CASCADE para eliminar dependencias."""
+    with engine.connect() as connection:
+        transaction = connection.begin()  # Iniciar transacción
+        connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
+        transaction.commit()  # Confirmar cambios
+        print(f"Tabla {table_name} eliminada con éxito.")
     
 def detect_numeric_columns(df):
     """
@@ -53,7 +61,10 @@ def detect_numeric_columns(df):
     return dtype
 
 def load_data_db(df, table):
- 
+    
+    # Eliminar la tabla actual con dependencias
+    drop_table_cascade(engine, table)
+    
     # Detectar las columnas flotantes en cada DataFrame
     dtype_df = detect_numeric_columns(df)
     
