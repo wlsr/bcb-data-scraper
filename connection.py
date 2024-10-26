@@ -3,20 +3,21 @@ import os
 from sqlalchemy import create_engine, Numeric, text
 from dotenv import load_dotenv
 
-# Cargar las variables del archivo .env en el entorno
+# Load the variables from the .env in the environment
 load_dotenv()
 
-# Obtener la contraseña desde la variable de entorno
+# get values from envirenment variables
 password = os.getenv('DB_PASSWORD')
 user = os.getenv('DB_USER')
 name_bd = os.getenv('DB_NAME')
+host = os.getenv('HOST')
+port = os.getenv('PORT')
 
-
-# Conexión a PostgreSQLfinancial_data
-engine = create_engine(f'postgresql+psycopg2://{user}:{password}@localhost/{name_bd}')
+# Conection to PostgreSQL financial_data
+engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}/{name_bd}')
     
-def create_database_if_not_exists(dbname, user, password, host='localhost', port='5432'):
-    # Conectar a la base de datos PostgreSQL (por defecto)
+def create_database_if_not_exists(dbname, user, password, host = host, port = port):
+    # Conect to the database
     connection = psycopg2.connect(
         dbname=user,
         user=user,
@@ -24,52 +25,52 @@ def create_database_if_not_exists(dbname, user, password, host='localhost', port
         host=host,
         port=port
     )
-    connection.autocommit = True  # Necesario para crear la base de datos
+    connection.autocommit = True  # Required to create the database
     cursor = connection.cursor()
     
-    # Verificar si la base de datos ya existe
+    # Check if the database exists
     cursor.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{dbname}'")
     exists = cursor.fetchone()
     
     if not exists:
-        # Si la base de datos no existe, crearla
+        # If it not exist, create it
         cursor.execute(f'CREATE DATABASE {dbname}')
-        print(f"Base de datos '{dbname}' creada exitosamente.")
+        print(f"Database '{dbname}' created successfully.")
     else:
-        print(f"La base de datos '{dbname}' ya existe.")
+        print(f"Database '{dbname}' already exists")
     
-    # Cerrar la conexión
+    # Close connection
     cursor.close()
     connection.close()
 
 def drop_table_cascade(engine, table_name):
-    """Eliminar la tabla con la opción CASCADE para eliminar dependencias."""
+    """ Drop table with CASCADE option """
     with engine.connect() as connection:
-        transaction = connection.begin()  # Iniciar transacción
+        transaction = connection.begin() 
         connection.execute(text(f'DROP TABLE IF EXISTS {table_name} CASCADE'))
-        transaction.commit()  # Confirmar cambios
-        print(f"Tabla {table_name} eliminada con éxito.")
+        transaction.commit()  # Confirm changes
+        print(f"Table {table_name} deleted successfully")
     
 def detect_numeric_columns(df):
     """
-    Detecta las columnas que son numéricas (incluyendo enteros y flotantes)
-    y devuelve un diccionario donde las columnas flotantes se asignan a Numeric.
+    Detect columns that are numeric (including integers and floats)
+    and returns a dict where float columns are mapped to numeric 
     """
     dtype = {}
     for col in df.select_dtypes(include=['float']).columns:
-        dtype[col] = Numeric(precision=18, scale=6)  # Ajusta precision y scale según sea necesario
+        dtype[col] = Numeric(precision=18, scale=6)  # Adjust precision and scale as necessary
     return dtype
 
 def load_data_db(df, table):
     
-    # Eliminar la tabla actual con dependencias
+    # Delete current table with dependencies
     drop_table_cascade(engine, table)
     
-    # Detectar las columnas flotantes en cada DataFrame
+    # Identify float columns
     dtype_df = detect_numeric_columns(df)
     
-    # Cargar los DataFrames a las tablas correspondientes
+    # Load the Dataframes to the corresponding tables
     df.to_sql(table, engine, if_exists='replace', index=False, dtype=dtype_df)
     
-# Ejemplo de uso
+# Example of use
 create_database_if_not_exists(dbname=name_bd, user=user, password=password)

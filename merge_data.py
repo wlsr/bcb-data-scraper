@@ -9,46 +9,46 @@ numeric = ['exchange_rate_bs', 'exchange_rate_me']
 
 def process_file(file_path, name_column):
     
-    # Extraer la fecha del nombre del archivo
+    # Extract date from file name 
     file_name = os.path.basename(file_path)
-    date_str = os.path.splitext(file_name)[0]  # Eliminar la extensión
+    date_str = os.path.splitext(file_name)[0]  # remove extension
     df_date = datetime.strptime(date_str, '%d-%m-%Y').date()
     
-    # Leer el archivo ODS
+    # Read the file
     df = pd.read_excel(file_path, engine='odf', skiprows=10, names=name_column, usecols='A:E')
     
-     # Inicializar el DataFrame de metales
+     # Initialize the df_metals DataFrame
     df_metales = pd.DataFrame()
     
     if df.shape[0] < 15:
         return None, None
         
-    # Reemplazar espacios en blanco y cadenas vacías con NaN
+    # Replace whitespace and empty strings with NaN
     df.replace(r'^\s*$', np.nan, regex=True, inplace=True)
     
-    # Añadir la fecha
+    # Add date
     df['date'] = df_date
     
-    # Eliminar filas con valores nulos en 'unidad monetaria'
+    # Remove rows with null values
     df = df.dropna(subset=['monetary_unit']) 
     
-    # Eliminar filas donde ambos tipos de cambio son NaN
+    # Remove rows where both exchange rates are NaN
     df = df.dropna(subset=['country','exchange_rate_bs', 'exchange_rate_me'], how='all')
     
-    # Eliminar las comas de las columnas especificadas
+    # Remove , from specified columns
     df[numeric] = df[numeric].replace({',': ''}, regex=True)
 
-    # Convertir las columnas especificadas en la lista 'numeric' a numérico, forzando errores a NaN
+    # Convert specifed columns in 'numeric' list a numerci, forze errors to NaN
     df[numeric] = df[numeric].apply(pd.to_numeric, errors='coerce')
 
-    # Filtrar para obtener metales
+    # Filter to get metals
     raw_metales = df[(df['country'] == 'ORO') | (df['country'] == 'PLATA')]
     df_metales = raw_metales.copy()
 
-    # Eliminar los metales del DataFrame original
+    # Remove metals from the original DF
     df = df.drop(raw_metales.index)
-
-    # Extraer currency
+    
+    # Extract currency
     index_to_keep = df[(df['monetary_unit'] == 'UNIDAD DE FOMENTO DE VIVIENDA') | (df['currency'] == 'Bs/UFV')].index
     if not index_to_keep.empty:
         df = df.loc[:index_to_keep[0]]
@@ -59,46 +59,45 @@ def process_file(file_path, name_column):
 def merge_data(directory_path):
     names_column = ['country', 'monetary_unit', 'currency', 'exchange_rate_bs', 'exchange_rate_me']
     all_df = pd.DataFrame()
-    all_df_metales = pd.DataFrame()
+    all_df_metals = pd.DataFrame()
 
-    # Procesar cada archivo .ods en el directorio
+    # Process each .ods file in the directory
     for file_name in os.listdir(directory_path):
         if file_name.endswith('.ods'):
             file_path = os.path.join(directory_path, file_name)
             df, df_metales = process_file(file_path, names_column)
             
-            # Si el resultado es None, pasar al siguiente archivo
+            # If result is None, skip to the next file
             if df is None or df_metales is None:
                 continue
 
-            # Concatenar los resultados con los DataFrames globales
+            # Concat the results with the global DF
             all_df = pd.concat([all_df, df], ignore_index=True)
-            all_df_metales = pd.concat([all_df_metales, df_metales], ignore_index=True)
+            all_df_metals = pd.concat([all_df_metals, df_metales], ignore_index=True)
             
-    # Restablecer el índice de all_df_metales
-    all_df_metales.reset_index(drop=True, inplace=True)
+    # Reset index of all_df_metals
+    all_df_metals.reset_index(drop=True, inplace=True)
 
-    if 'exchange_rate_bs' in all_df_metales.columns:
-        all_df_metales['exchange_rate_me'] = all_df_metales['exchange_rate_bs']
-        all_df_metales = all_df_metales.drop(columns=['exchange_rate_bs'])
+    if 'exchange_rate_bs' in all_df_metals.columns:
+        all_df_metals['exchange_rate_me'] = all_df_metals['exchange_rate_bs']
+        all_df_metals = all_df_metals.drop(columns=['exchange_rate_bs'])
     else:
-        print("La columna 'exchange_rate_bs' no existe en all_df_metales.")
+        print("La columna 'exchange_rate_bs' no existe en all_df_metals.")
     
-    all_df_metales.rename(columns={'country':'metal'}, inplace=True)
+    all_df_metals.rename(columns={'country':'metal'}, inplace=True)
     
-    # Mostrar los DataFrames resultantes
+    # Show the resulting DataFrames
     print(all_df.shape)
-    print(all_df_metales.shape)
+    print(all_df_metals.shape)
     
-    # guardar en un csv for the tests
+    # Save to a CSV for the tests
     df.to_csv('data/raw_exchange_rates.csv', index=False)
     
-    # Puedes devolver los DataFrames si lo necesitas para otros fines
-    return all_df, all_df_metales
+    return all_df, all_df_metals
 
-# Ejecutar la función para procesar los archivos en la carpeta 'data'
-directory_path = 'data'  # Asegúrate de que esta carpeta exista
-all_df, all_df_metales = merge_data(directory_path)
+# example of use
+directory_path = 'data' 
+all_df, all_df_metals = merge_data(directory_path)
 
 load_data_db(all_df, 'raw_exchange_rates')
-load_data_db(all_df_metales, 'raw_metals')
+load_data_db(all_df_metals, 'raw_metals')
