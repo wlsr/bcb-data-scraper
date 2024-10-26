@@ -2,7 +2,7 @@
 # BCB Data Scraper
 
 ## Description
-This project downloads ODS files containing financial data from the Central Bank of Bolivia's website, processes them, and extracts relevant information. It is designed to automate data extraction, cleaning, and merging for further analysis.
+This project downloads ODS files containing financial data from the Central Bank of Bolivia's website, processes them, and extracts relevant information. It is designed to automate data extraction, cleaning, and merging for further analysis. This process is part of the ELT pipeline, where data extraction and loading are performed.
 
 ## Features
 - Download daily financial data in ODS format, skipping weekends.
@@ -30,9 +30,11 @@ Script for downloading ODS files
 project-directory/
 │
 ├── data/                      # Folder where the ODS files will be saved
+├── connection.py              # Script manages the conecction to the database
 ├── extract_data.py            # Script for downloading ODS files
 ├── merge_data.py              # Script for processing and merging data
-└── README.md                  # Project documentation
+├── README.md                  # Project documentation
+└── requirements.txt           # the necessary packages
 ```
 
 ## Usage
