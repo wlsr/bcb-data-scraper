@@ -19,10 +19,11 @@ This project downloads ODS files containing financial data from the Central Bank
   - `numpy`
   - `datetime`
   - `psycopg2`
+  - `others`
 
 Make sure to install the necessary packages using:
 ```bash
-pip install requests pandas numpy
+pip install -r requirements.txt
 ```
 Script for downloading ODS files
 ## Project Structure
