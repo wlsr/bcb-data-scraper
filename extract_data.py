@@ -42,9 +42,9 @@ def download_ods_files(start_date, end_date, download_path, delay):
 
         current_date += timedelta(days=1)  # Go to the next day
 
-# Example of use
-start_date = datetime(2008, 1, 1)
-end_date = datetime(2024, 10, 26)
-download_path = 'data' 
+# # Example of use
+# start_date = datetime(2008, 1, 1)
+# end_date = datetime(2024, 10, 26)
+# download_path = 'data' 
 
-download_ods_files(start_date, end_date, download_path,delay=0.5)
+# download_ods_files(start_date, end_date, download_path,delay=0.5)

@@ -30,30 +30,38 @@ Script for downloading ODS files
 ```
 project-directory/
 │
-├── data/                      # Folder where the ODS files will be saved
-├── connection.py              # Script manages the conecction to the database
-├── extract_data.py            # Script for downloading ODS files
-├── merge_data.py              # Script for processing and merging data
+├── data/                      # Folder for saving ODS files
+├── connection.py              # Script to manage the connection to the database
+├── extract_data.py            # Script to download ODS files
+├── merge_data.py              # Script to process and merge data
+├── load_data.py               # Script to load data into the database
+├── main.py                    # Main script to execute the full ETL pipeline
 ├── README.md                  # Project documentation
-└── requirements.txt           # the necessary packages
+└── requirements.txt           # List of required packages
+
 ```
 
 ## Usage
 
-### Extracting ODS Files
-To download the ODS files, run the `extract_data.py` with specified start and end dates:
-```python
-start_date = datetime(2024, 1, 1)
-end_date = datetime(2024, 2, 29)
-download_path = 'data'  # Ensure this folder exists
+### MAIN
 
-download_ods_files(start_date, end_date, download_path, delay=2)
-```
+``` Python
+# Extract
 
-### Merging Data
-After downloading the files, you can merge and process them using:
-```python
-all_df, all_df_metales = merge_data('data')
+start_date = datetime(2008, 1, 1)
+end_date = datetime(2024, 10, 26)
+download_path = 'data' 
+
+download_ods_files(start_date, end_date, download_path,delay=0.5)
+
+# Merge
+
+directory_path = 'data' 
+all_df, all_df_metals = merge_data(directory_path)
+
+# Load
+load_data_db(all_df, 'raw_exchange_rates')
+load_data_db(all_df_metals, 'raw_metals')
 ```
 
 ## Code Explanation
@@ -63,6 +71,9 @@ The script downloads ODS files from the Central Bank of Bolivia's website based 
 
 ### Merge Script (`merge_data.py`)
 This script processes the downloaded files by cleaning the data, filtering out empty rows, separating data related to metals, and merging the files for analysis.
+
+### Load data (`load_data.py `)
+This script load data into the database such as raw_exchange_rates and raw_metals (tables)
 
 ## Considerations
 - Ensure that the `data` directory exists before running the scripts.

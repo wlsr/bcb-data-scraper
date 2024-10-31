@@ -96,8 +96,8 @@ def merge_data(directory_path):
     return all_df, all_df_metals
 
 # example of use
-directory_path = 'data' 
-all_df, all_df_metals = merge_data(directory_path)
+# directory_path = 'data' 
+# all_df, all_df_metals = merge_data(directory_path)
 
-load_data_db(all_df, 'raw_exchange_rates')
-load_data_db(all_df_metals, 'raw_metals')
+# load_data_db(all_df, 'raw_exchange_rates')
+# load_data_db(all_df_metals, 'raw_metals')
